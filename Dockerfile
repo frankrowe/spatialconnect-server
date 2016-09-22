@@ -14,12 +14,15 @@ RUN webpack
 # Copy server source to server dir
 RUN mkdir -p /usr/src/server
 WORKDIR /usr/src/server
+COPY schema /usr/src/schema
 COPY server /usr/src/server
 RUN rm -rf /usr/src/web/node_modules
 
 # Install server dependencies
 RUN npm install --silent
+RUN npm install nodemon -g --silent
+RUN npm install babel-cli -g --silent
 
 # Start the service
 EXPOSE 8085
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:development"]

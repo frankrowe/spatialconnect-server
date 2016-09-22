@@ -1,7 +1,6 @@
 /* global beforeEach, afterEach, describe, it */
 'use strict';
 var request = require('supertest');
-var uuid = require('node-uuid');
 
 function makeStr(len)
 {
@@ -18,7 +17,7 @@ function makeStr(len)
 describe('Testing Users. It',() => {
   let server;
   let xaccesstoken;
-  beforeEach((done) => {
+  beforeEach(done => {
     server = require('./../server');
     request(server)
       .post('/api/authenticate')
@@ -28,28 +27,10 @@ describe('Testing Users. It',() => {
         if (err) {
           console.log(err);
         }
-        xaccesstoken = res.body.token;
+        xaccesstoken = res.body.result.token;
         done();
       });
   });
-
-  // it('can get a list of forms',(done) => {
-  //   request(server)
-  //     .get('/api/forms')
-  //     .set('Content-Type','application/json')
-  //     .set('x-access-token',xaccesstoken)
-  //     .expect(200)
-  //     .end((err,res) => {
-  //       if (err) {
-  //         return done(err);
-  //       }
-  //       res.body.map((v,idx) => {
-  //         if (idx === res.body.length - 1) {
-  //           done();
-  //         }
-  //       });
-  //     });
-  // });
 
   let formname = makeStr(10);
   let form = {
@@ -81,9 +62,9 @@ describe('Testing Users. It',() => {
   };
 
   let newForm = {
-    form_key:formname,
-    form_label:formname,
-    version : 4,
+    form_key: formname,
+    form_label: formname,
+    version : 3,
     fields : []
   };
 
@@ -115,13 +96,81 @@ describe('Testing Users. It',() => {
     ]
   };
 
+  let formsubmission = {
+    id: '1',
+    geometry: {
+      type: 'Point',
+      coordinates: [ -122.40777475, 37.73868713, 0 ]
+    },
+    bbox: [ 0, 0, 0, 0 ],
+    properties: { team: 'A', why: 'A' },
+    crs: { type: 'name', properties: { name: 'EPSG:4326' } },
+    metadata: {
+      created_at: '2016-08-22 14:08:49 EDT',
+      client: 'D25DA92D-F53D-460A-A4B6-8B57EC59C46C',
+      layerId: 'baseball_team'
+    },
+    type: 'Feature'
+  };
 
   it('can get a create a form',(done) => {
     request(server)
       .post('/api/forms')
       .set('Content-Type','application/json')
       .set('x-access-token',xaccesstoken)
-      .send(form).end(function(err) {
+      .send(form)
+      .end(function(err) {
+        if (err) done(err);
+        done();
+      });
+  });
+
+  it('can get a list of forms',(done) => {
+    request(server)
+      .get('/api/forms')
+      .set('Content-Type','application/json')
+      .set('x-access-token',xaccesstoken)
+      .expect(200)
+      .end(function(err) {
+        if (err) done(err);
+        done();
+      });
+  });
+
+  it('can get a single form',(done) => {
+    request(server)
+      .get('/api/forms/' + formname)
+      .set('Content-Type','application/json')
+      .set('x-access-token',xaccesstoken)
+      .expect(200, done);
+  });
+
+  it('can get form results',(done) => {
+    request(server)
+      .get('/api/forms/1/results')
+      .set('Content-Type','application/json')
+      .set('x-access-token',xaccesstoken)
+      .expect(200,done);
+  });
+
+  it('can submit a form',(done) => {
+    request(server)
+    .post('/api/forms/2/submit')
+    .set('Content-Type','application/json')
+    .set('x-access-token',xaccesstoken)
+    .send(formsubmission)
+    .end(function(err) {
+      if (err) done(err);
+      done();
+    });
+  });
+
+  it('can update a form',(done) => {
+    request(server)
+      .post('/api/forms')
+      .set('Content-Type','application/json')
+      .set('x-access-token',xaccesstoken)
+      .send(formupdate).end(function(err) {
         if (err) done(err);
         done();
       });
@@ -138,12 +187,13 @@ describe('Testing Users. It',() => {
       });
   });
 
-  it('can update a form',(done) => {
+  it('can delete a form',(done) => {
     request(server)
-      .post('/api/forms')
+      .delete('/api/forms/' + formname)
       .set('Content-Type','application/json')
       .set('x-access-token',xaccesstoken)
-      .send(formupdate).end(function(err) {
+      .send(form)
+      .end(function(err) {
         if (err) done(err);
         done();
       });
